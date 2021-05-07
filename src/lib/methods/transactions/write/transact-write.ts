@@ -1,4 +1,3 @@
-import { TransactWriteItemsInput, TransactWriteItem } from 'aws-sdk/clients/dynamodb';
 import { Method } from '../../method';
 import { Executable } from '../../executable';
 import { DynamoDB } from '../../../dynamodb';
@@ -10,6 +9,7 @@ import { TransactDeleteItem } from './transact-delete-item';
 import { TransactInsertItem } from './transact-insert-item';
 import { Query } from '../../query';
 import { generateConditionCheck } from '../utils/condition-check';
+import { TransactWriteItem, TransactWriteItemsCommandInput } from '@aws-sdk/client-dynamodb';
 
 export type WriteItem = InsertItem | UpdateItem | DeleteItem;
 
@@ -38,7 +38,7 @@ export class TransactWrite extends Method  implements Executable {
 	/**
 	 * Builds and returns the raw DynamoDB query object.
 	 */
-	buildRawQuery(): TransactWriteItemsInput {
+	buildRawQuery(): TransactWriteItemsCommandInput {
 		const items = this.actions.map(action => {
 			if (action instanceof UpdateItem) {
 				return new TransactUpdateItem(action);
@@ -77,35 +77,18 @@ export class TransactWrite extends Method  implements Executable {
 
 		const query = this.buildRawQuery();
 
-		if (query.TransactItems.length > 25) {
+		if (query.TransactItems && query.TransactItems.length > 25) {
 			throw new Error(`Number of transaction items should be less than or equal to \`25\`, got \`${query.TransactItems.length}\``);
 		}
 
-		const request = db.transactWriteItems(query);
-
-		return new Promise((resolve, reject) => {
-			let cancellationReasons;
-
-			request.on('extractError', (response) => {
-				try {
-					cancellationReasons = JSON.parse(response.httpResponse.body.toString()).CancellationReasons;
-				} catch (err) {
-					// If for some reason we can't parse the error, we still want everything to work
-					console.error('Error extracting cancellation error', err);
-				}
-			});
-
-			request.send((err) => {
+		return db.transactWriteItems(query).catch(err => {
+			if (err) {
 				if (err) {
-					if (cancellationReasons) {
-						(err as any).cancellationReasons = cancellationReasons;
-					}
-
-					return reject(err);
+					(err as any).cancellationReasons = err;
 				}
 
-				return resolve();
-			});
+				return err;
+			}
 		});
 	}
 }

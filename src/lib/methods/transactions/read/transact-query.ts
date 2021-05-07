@@ -1,7 +1,7 @@
-import { TransactGetItem, Converter } from 'aws-sdk/clients/dynamodb';
 import { TransactMethod } from '../transact-method';
 import { Query } from '../../query';
 import { keyParser } from '../utils/key-parser';
+import { TransactGetItem } from '@aws-sdk/client-dynamodb';
 
 export class TransactQuery extends TransactMethod {
 
@@ -30,7 +30,7 @@ export class TransactQuery extends TransactMethod {
 		return {
 			Get: {
 				TableName: build.TableName,
-				Key: Converter.marshall(key.Key),
+				Key: key.Key,
 				ExpressionAttributeNames: key.AttributeNames,
 				ProjectionExpression: build.ProjectionExpression
 			}

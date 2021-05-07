@@ -1,4 +1,3 @@
-import { UpdateItemInput } from 'aws-sdk/clients/dynamodb';
 import * as queryUtil from '../utils/query';
 import * as updateUtil from '../utils/update';
 import { Executable } from './executable';
@@ -6,6 +5,7 @@ import { Method } from './method';
 import { DynamoDB } from '../dynamodb';
 import { Table } from '../table';
 import { UpdateQuery } from '../types';
+import { UpdateItemCommandInput } from '@aws-sdk/client-dynamodb';
 
 export class InsertItem extends Method implements Executable {
 
@@ -53,7 +53,7 @@ export class InsertItem extends Method implements Executable {
 	/**
 	 * Builds and returns the raw DynamoDB query object.
 	 */
-	buildRawQuery(): UpdateItemInput {
+	buildRawQuery(): UpdateItemCommandInput {
 		// Parse the query to add a negated condition expression https://github.com/SamVerschueren/dynongo/issues/3
 		const parsedQuery = queryUtil.parse(this.params.Key || {});
 
@@ -63,7 +63,7 @@ export class InsertItem extends Method implements Executable {
 			ConditionExpression: `NOT (${parsedQuery.ConditionExpression})`,
 			ExpressionAttributeNames: {...this.params.ExpressionAttributeNames, ...parsedQuery.ExpressionAttributeNames},
 			ExpressionAttributeValues: {...this.params.ExpressionAttributeValues, ...parsedQuery.ExpressionAttributeValues}
-		} as UpdateItemInput;
+		} as UpdateItemCommandInput;
 
 		if (result.UpdateExpression === '') {
 			delete result.UpdateExpression;
@@ -84,7 +84,7 @@ export class InsertItem extends Method implements Executable {
 
 		const query = this.buildRawQuery();
 
-		return this.runQuery(() => db.update(query).promise())
+		return this.runQuery(() => db.update(query))
 			.then(data => {
 				// Return the attributes
 				return this.rawResult === true ? data : data.Attributes;

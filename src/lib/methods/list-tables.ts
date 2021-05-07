@@ -33,7 +33,7 @@ export class ListTables extends Method implements Executable {
 		const db = this.dynamodb.raw !;
 		const prefix = this.dynamodb.prefix;
 
-		return db.listTables(params).promise()
+		return db.listTables(params)
 			.then(data => {
 				result = result.concat(data.TableNames || []);
 

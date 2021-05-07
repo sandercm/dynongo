@@ -1,4 +1,4 @@
-import { QueryInput } from 'aws-sdk/clients/dynamodb';
+import { QueryCommandInput } from '@aws-sdk/lib-dynamodb';
 
 const generateKeyMap = (expression: string) => {
 	const keyExtractRegex = /(#.*?)=(:.*?)(\s|$)/g;
@@ -21,7 +21,7 @@ const generateKeyMap = (expression: string) => {
  *
  * @param	query	Query that should be parsed.
  */
-export const keyParser = (query: QueryInput) => {
+export const keyParser = (query: QueryCommandInput) => {
 	const keyMap = generateKeyMap(query.KeyConditionExpression || '');
 
 	const key = {};

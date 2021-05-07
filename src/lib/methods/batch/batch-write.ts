@@ -1,9 +1,9 @@
-import { BatchWriteItemInput } from 'aws-sdk/clients/dynamodb';
 import { Executable } from '../executable';
 import { DynamoDB } from '../../dynamodb';
 import { BatchItem } from './batch-item';
 import { BaseMethod } from '../base-method';
 import { UnprocessedItemsException } from '../../errors/unprocessed-items-exception';
+import { BatchWriteItemCommandInput } from '@aws-sdk/client-dynamodb';
 
 export class BatchWrite extends BaseMethod implements Executable {
 
@@ -16,7 +16,7 @@ export class BatchWrite extends BaseMethod implements Executable {
 	/**
 	 * Builds and returns the raw DynamoDB query object.
 	 */
-	buildRawQuery(): BatchWriteItemInput {
+	buildRawQuery(): BatchWriteItemCommandInput {
 		const request = {
 			RequestItems: {}
 		};
@@ -56,7 +56,7 @@ export class BatchWrite extends BaseMethod implements Executable {
 
 		let query = this.buildRawQuery();
 		return this.runQuery(async () => {
-			const {UnprocessedItems} = await db.batchWrite(query).promise();
+			const {UnprocessedItems} = await db.batchWrite(query);
 			if (UnprocessedItems && Object.keys(UnprocessedItems).length > 0) {
 				query = {RequestItems: UnprocessedItems};
 				throw new UnprocessedItemsException(`${Object.keys(UnprocessedItems).length} could not be processed`);

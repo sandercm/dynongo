@@ -67,7 +67,7 @@ export class Query extends BaseQuery implements Executable {
 
 		const query = this.buildRawQuery();
 
-		return this.runQuery(() => db.query(query).promise())
+		return this.runQuery(() => db.query(query))
 			.then(data => {
 				if (query.Select === 'COUNT') {
 					// Return the count property if Select is set to count.

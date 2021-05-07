@@ -29,17 +29,17 @@ test('connect options', t => {
 		randomize: true,
 		retries: 3
 	});
-	t.deepEqual(db.raw?.config.httpOptions, {
+	t.deepEqual((db.raw?.config as any).httpOptions, {
 		timeout: 5000
 	});
 });
 
 test('connect locally', t => {
 	db.connect({local: true});
-	t.is((db.raw!).endpoint.href, 'http://localhost:8000/');
+	t.is(((db.raw!) as any).endpoint.href, 'http://localhost:8000/');
 
 	db.connect({local: true, localPort: 9000});
-	t.is((db.raw!).endpoint.href, 'http://localhost:9000/');
+	t.is(((db.raw!) as any).endpoint.href, 'http://localhost:9000/');
 });
 
 test('table', t => {

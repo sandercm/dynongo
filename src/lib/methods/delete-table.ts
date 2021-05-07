@@ -1,9 +1,9 @@
 import delay from 'delay';
-import { DeleteTableInput } from 'aws-sdk/clients/dynamodb';
 import { Method } from './method';
 import { Executable } from './executable';
 import { DynamoDB } from '../dynamodb';
 import { Table } from '../table';
+import { DeleteTableCommandOutput, DeleteTableInput } from '@aws-sdk/client-dynamodb';
 
 export class DeleteTable extends Method implements Executable {
 
@@ -40,16 +40,16 @@ export class DeleteTable extends Method implements Executable {
 	/**
 	 * This method will execute the delete table request that was built up.
 	 */
-	exec(): Promise<void> {
+	exec(): Promise<DeleteTableCommandOutput> {
 		const db = this.dynamodb.raw;
 
 		if (!db) {
 			return Promise.reject(new Error('Call .connect() before executing queries.'));
 		}
 
-		return db.deleteTable(this.buildRawQuery()).promise()
-			.then(() => {
-				if (this.shouldWait === true) {
+		return db.deleteTable(this.buildRawQuery())
+			.then((out) => {
+				if (out.TableDescription && this.shouldWait) {
 					// If await is true, start polling
 					return this.poll();
 				}
@@ -81,6 +81,6 @@ export class DeleteTable extends Method implements Executable {
 
 		await delay(this.waitMs);
 
-		return await db.describeTable({TableName: (this.table !).name}).promise();
+		return await db.describeTable({TableName: (this.table !).name});
 	}
 }

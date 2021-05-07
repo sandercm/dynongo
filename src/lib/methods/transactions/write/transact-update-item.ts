@@ -1,6 +1,6 @@
-import { TransactWriteItem, Converter } from 'aws-sdk/clients/dynamodb';
 import { TransactMethod } from '../transact-method';
 import { UpdateItem } from '../../update-item';
+import { TransactWriteItem } from '@aws-sdk/client-dynamodb';
 
 export class TransactUpdateItem extends TransactMethod {
 	constructor(
@@ -18,11 +18,11 @@ export class TransactUpdateItem extends TransactMethod {
 		return {
 			Update: {
 				TableName: result.TableName,
-				Key: Converter.marshall(result.Key),
+				Key: result.Key,
 				ConditionExpression: result.ConditionExpression,
 				UpdateExpression: result.UpdateExpression !,
 				ExpressionAttributeNames: result.ExpressionAttributeNames,
-				ExpressionAttributeValues: result.ExpressionAttributeValues ? Converter.marshall(result.ExpressionAttributeValues) : undefined
+				ExpressionAttributeValues: result.ExpressionAttributeValues ? result.ExpressionAttributeValues : undefined
 			}
 		};
 	}

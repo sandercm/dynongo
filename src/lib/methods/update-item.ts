@@ -1,9 +1,9 @@
-import { UpdateItemInput } from 'aws-sdk/clients/dynamodb';
 import { DynamoDB } from '../dynamodb';
 import { Table } from '../table';
 import * as queryUtil from '../utils/query';
 import { Executable } from './executable';
 import { InsertItem } from './insert-item';
+import { UpdateItemCommandInput } from '@aws-sdk/client-dynamodb';
 
 export class UpdateItem extends InsertItem implements Executable {
 
@@ -42,11 +42,11 @@ export class UpdateItem extends InsertItem implements Executable {
 	/**
 	 * Builds and returns the raw DynamoDB query object.
 	 */
-	buildRawQuery(): UpdateItemInput {
+	buildRawQuery(): UpdateItemCommandInput {
 		return {
 			...this.params,
 			TableName: (this.table !).name
-		} as UpdateItemInput;
+		} as UpdateItemCommandInput;
 	}
 
 	/**
@@ -59,7 +59,7 @@ export class UpdateItem extends InsertItem implements Executable {
 			return Promise.reject(new Error('Call .connect() before executing queries.'));
 		}
 
-		return this.runQuery(() => db.update(this.buildRawQuery()).promise())
+		return this.runQuery(() => db.update(this.buildRawQuery()))
 			.then(data => {
 				// Return the attributes
 				return this.rawResult === true ? data : data.Attributes;

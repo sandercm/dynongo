@@ -43,7 +43,7 @@ export class Scan extends BaseQuery implements Executable {
 
 		const query = this.buildRawQuery();
 
-		return this.runQuery(() => db.scan(this.buildRawQuery()).promise())
+		return this.runQuery(() => db.scan(this.buildRawQuery()))
 			.then(data => {
 				if (query.Select === 'COUNT') {
 					// Return the count property if Select is set to count.

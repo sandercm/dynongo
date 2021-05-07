@@ -1,6 +1,6 @@
-import { TransactWriteItem, Converter } from 'aws-sdk/clients/dynamodb';
 import { TransactMethod } from '../transact-method';
 import { DeleteItem } from '../../delete-item';
+import { TransactWriteItem } from '@aws-sdk/client-dynamodb';
 
 export class TransactDeleteItem extends TransactMethod {
 
@@ -19,10 +19,10 @@ export class TransactDeleteItem extends TransactMethod {
 		return {
 			Delete: {
 				TableName: result.TableName,
-				Key: Converter.marshall(result.Key),
+				Key: result.Key,
 				ConditionExpression: result.ConditionExpression,
 				ExpressionAttributeNames: result.ExpressionAttributeNames,
-				ExpressionAttributeValues: result.ExpressionAttributeValues ? Converter.marshall(result.ExpressionAttributeValues) : undefined
+				ExpressionAttributeValues: result.ExpressionAttributeValues ? result.ExpressionAttributeValues : undefined
 			}
 		};
 	}

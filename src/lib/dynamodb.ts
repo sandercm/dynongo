@@ -1,4 +1,5 @@
-import AWS from 'aws-sdk';
+import { DynamoDB as AWSDynamoDB } from '@aws-sdk/client-dynamodb';
+import * as AWS from '@aws-sdk/lib-dynamodb';
 import pick from 'object.pick';
 import { Options as RetryOptions } from 'p-retry';
 import { Table, TableOptions } from './table';
@@ -26,13 +27,13 @@ export interface DynamoDBOptions {
 	secretAccessKey?: string;
 	sessionToken?: string;
 	retries?: number | RetryOptions;
-	httpOptions?: AWS.HTTPOptions;
+	httpOptions?: any;
 }
 
 export class DynamoDB {
 
-	public raw?: AWS.DynamoDB;
-	public dynamodb?: AWS.DynamoDB.DocumentClient;
+	public raw?: AWSDynamoDB;
+	public dynamodb?: AWS.DynamoDBDocument;
 	private options: DynamoDBOptions = {};
 	private _retries?: number | RetryOptions;
 
@@ -47,24 +48,28 @@ export class DynamoDB {
 
 		this._retries = configureRetryOptions(this.options.retries);
 
-		AWS.config.update(pick(this.options, ['region', 'accessKeyId', 'secretAccessKey', 'sessionToken']));
-
 		if (this.options.local) {
 			// Starts dynamodb in local mode
-			this.raw = new AWS.DynamoDB({
-				endpoint: `http://${this.options.host}:${this.options.localPort}`,
-				httpOptions: this.options.httpOptions
-			});
+			this.raw = new AWSDynamoDB({
+					...pick(
+						this.options, ['region', 'accessKeyId', 'secretAccessKey', 'sessionToken']
+					),
+					endpoint: `http://${this.options.host}:${this.options.localPort}`,
+					httpOptions: this.options.httpOptions
+				}
+			);
 		} else {
 			// Starts dynamodb in remote mode
-			this.raw = new AWS.DynamoDB({
-				httpOptions: this.options.httpOptions
-			});
+			this.raw = new AWSDynamoDB({
+					...pick(
+						this.options, ['region', 'accessKeyId', 'secretAccessKey', 'sessionToken']
+					),
+					httpOptions: this.options.httpOptions
+				}
+			);
 		}
 
-		this.dynamodb = new AWS.DynamoDB.DocumentClient({
-			service: this.raw
-		});
+		this.dynamodb = AWS.DynamoDBDocument.from(this.raw);
 	}
 
 	get delimiter() {

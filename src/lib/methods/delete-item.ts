@@ -1,9 +1,9 @@
-import { DeleteItemInput } from 'aws-sdk/clients/dynamodb';
 import { Method } from './method';
 import { Executable } from './executable';
 import { DynamoDB } from '../dynamodb';
 import { Table } from '../table';
 import * as queryUtil from '../utils/query';
+import { DeleteItemCommandInput } from '@aws-sdk/client-dynamodb';
 
 export class DeleteItem extends Method implements Executable {
 
@@ -68,11 +68,11 @@ export class DeleteItem extends Method implements Executable {
 	/**
 	 * Builds and returns the raw DynamoDB query object.
 	 */
-	buildRawQuery(): DeleteItemInput {
+	buildRawQuery(): DeleteItemCommandInput {
 		return {
 			...this.params,
 			TableName: (this.table !).name
-		} as DeleteItemInput;
+		} as DeleteItemCommandInput;
 	}
 
 	/**
@@ -85,7 +85,7 @@ export class DeleteItem extends Method implements Executable {
 			return Promise.reject(new Error('Call .connect() before executing queries.'));
 		}
 
-		return this.runQuery(() => db.delete(this.buildRawQuery()).promise())
+		return this.runQuery(() => db.delete(this.buildRawQuery()))
 			.then(data => {
 				if (this.params.ReturnValues === 'ALL_OLD') {
 					return this.rawResult === true ? data : data.Attributes;

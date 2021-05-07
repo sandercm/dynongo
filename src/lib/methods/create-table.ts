@@ -62,7 +62,7 @@ export class CreateTable extends Method implements Executable {
 			return Promise.reject(new Error('Call .connect() before executing queries.'));
 		}
 
-		return db.createTable(this.buildRawQuery()).promise()
+		return db.createTable(this.buildRawQuery())
 			.then(() => {
 				if (this.shouldWait === true) {
 					// Start polling if await is set to true
@@ -96,6 +96,6 @@ export class CreateTable extends Method implements Executable {
 
 		await delay(this.waitMs);
 
-		return await db.describeTable({TableName: (this.table!).name}).promise();
+		return await db.describeTable({TableName: (this.table!).name});
 	}
 }
