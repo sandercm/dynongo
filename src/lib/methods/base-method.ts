@@ -25,7 +25,7 @@ export abstract class BaseMethod implements QueryBuilder {
 	 * @param options - Retry configuration options.
 	 */
 	retry(options: RetryOptions);
-	retry(retries: number | RetryOptions) {
+	retry(retries: number | RetryOptions): BaseMethod {
 		this.retries = retries;
 		return this;
 	}

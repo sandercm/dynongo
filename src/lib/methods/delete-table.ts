@@ -1,14 +1,15 @@
-import delay from 'delay';
 import { Method } from './method';
 import { Executable } from './executable';
 import { DynamoDB } from '../dynamodb';
 import { Table } from '../table';
-import { DeleteTableCommandOutput, DeleteTableInput } from '@aws-sdk/client-dynamodb';
+import { DeleteTableCommandInput } from '@aws-sdk/client-dynamodb';
+import delay from 'delay';
 
 export class DeleteTable extends Method implements Executable {
 
 	private shouldWait = false;
 	private waitMs: number = 1000;
+	private db = this.dynamodb.raw;
 
 	constructor(table: Table, dynamodb: DynamoDB) {
 		super(table, dynamodb);
@@ -30,7 +31,7 @@ export class DeleteTable extends Method implements Executable {
 	/**
 	 * Builds and returns the raw DynamoDB query object.
 	 */
-	buildRawQuery(): DeleteTableInput {
+	buildRawQuery(): DeleteTableCommandInput {
 		return {
 			...this.params,
 			TableName: (this.table !).name
@@ -40,47 +41,39 @@ export class DeleteTable extends Method implements Executable {
 	/**
 	 * This method will execute the delete table request that was built up.
 	 */
-	exec(): Promise<DeleteTableCommandOutput> {
-		const db = this.dynamodb.raw;
+	async exec(): Promise<void> {
 
-		if (!db) {
+		if (!this.db) {
 			return Promise.reject(new Error('Call .connect() before executing queries.'));
 		}
-
-		return db.deleteTable(this.buildRawQuery())
-			.then((out) => {
-				if (out.TableDescription && this.shouldWait) {
-					// If await is true, start polling
-					return this.poll();
-				}
-			})
-			.catch(err => {
-				if (err && err.name !== 'ResourceNotFoundException') {
-					throw err;
-				}
-			});
+		try {
+			const command = await this.db.deleteTable(this.buildRawQuery());
+			if (command.TableDescription && this.shouldWait) {
+				return this.poll();
+			}
+		} catch (err) {
+			if (err && err.name !== 'ResourceNotFoundException') {
+				throw err;
+			}
+			throw err;
+		}
 	}
 
 	private async poll() {
-		await this.pollHelper();
-
-		try {
-			return await this.poll();
-		} catch (error) {
-			if (error.name !== 'ResourceNotFoundException') {
-				// If the error is not a ResourceNotFoundException, throw it further down the chain
-				throw error;
-			}
-
-			return;
+		if (!this.db) {
+			return Promise.reject(new Error('Call .connect() before executing queries.'));
 		}
-	}
-
-	private async pollHelper() {
-		const db = this.dynamodb.raw !;
-
-		await delay(this.waitMs);
-
-		return await db.describeTable({TableName: (this.table !).name});
+		try {
+			await delay(this.waitMs);
+			const response = await this.db.describeTable({TableName: (this.table !).name});
+			if (response.Table?.TableStatus === 'DELETING') {
+				return this.poll();
+			}
+		} catch (err) {
+			if (err && err.name !== 'ResourceNotFoundException') {
+				return;
+			}
+			throw err;
+		}
 	}
 }

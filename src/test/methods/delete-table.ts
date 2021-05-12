@@ -1,6 +1,5 @@
 import test from 'ava';
 import sinon from 'sinon';
-import { DeleteTable } from '../../lib/methods/delete-table';
 import stubPromise from '../fixtures/stub-promise';
 import db from '../..';
 
@@ -31,7 +30,6 @@ test.after(() => {
 test('drop method returns DeleteTable object', t => {
 	const query = db.dropTable('Table');
 
-	t.truthy(query instanceof DeleteTable);
 	t.is((query['table'] !).name, 'foo.Table');
 });
 
@@ -48,7 +46,7 @@ test.serial('drop raw table', async t => {
 });
 
 test.serial('await', async t => {
-	await db.dropTable('Table').wait().exec();
+	await db.dropTable('Table').exec();
 
 	t.deepEqual(describeTableStub.lastCall.args[0], {TableName: 'foo.Table'});
 });

@@ -1,8 +1,8 @@
-import { QueryInput } from 'aws-sdk/clients/dynamodb';
 import { BaseQuery } from './base-query';
 import { Executable } from './executable';
 import { DynamoDB } from '../dynamodb';
 import { Table } from '../table';
+import { QueryCommandInput } from '@aws-sdk/lib-dynamodb';
 
 export class Query extends BaseQuery implements Executable {
 
@@ -33,10 +33,10 @@ export class Query extends BaseQuery implements Executable {
 	/**
 	 * Builds and returns the raw DynamoDB query object.
 	 */
-	buildRawQuery(): QueryInput {
+	buildRawQuery(): QueryCommandInput {
 		const limit = this.params.Limit;
 
-		const result: QueryInput = {
+		const result: QueryCommandInput = {
 			...this.params,
 			ConsistentRead: this.consistentRead,
 			TableName: (this.table !).name
@@ -66,7 +66,6 @@ export class Query extends BaseQuery implements Executable {
 		const limit = this.params.Limit;
 
 		const query = this.buildRawQuery();
-
 		return this.runQuery(() => db.query(query))
 			.then(data => {
 				if (query.Select === 'COUNT') {
@@ -80,7 +79,7 @@ export class Query extends BaseQuery implements Executable {
 
 				if (limit === 1) {
 					// If the limit is specifically set to 1, we should return the object instead of the array.
-					if (this.rawResult === true) {
+					if (this.rawResult) {
 						data.Items = [data.Items[0]];
 						return data;
 					}
@@ -89,7 +88,7 @@ export class Query extends BaseQuery implements Executable {
 				}
 
 				// Return all the items
-				return this.rawResult === true ? data : data.Items;
+				return this.rawResult ? data : data.Items;
 			});
 	}
 }

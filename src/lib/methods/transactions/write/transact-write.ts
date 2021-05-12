@@ -80,15 +80,14 @@ export class TransactWrite extends Method  implements Executable {
 		if (query.TransactItems && query.TransactItems.length > 25) {
 			throw new Error(`Number of transaction items should be less than or equal to \`25\`, got \`${query.TransactItems.length}\``);
 		}
-
-		return db.transactWriteItems(query).catch(err => {
+		try {
+			await db.transactWriteItems(query);
+		} catch (err) {
 			if (err) {
-				if (err) {
 					(err as any).cancellationReasons = err;
 				}
 
 				return err;
-			}
-		});
+		}
 	}
 }

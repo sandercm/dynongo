@@ -1,7 +1,7 @@
-import { QueryInput } from 'aws-sdk/clients/dynamodb';
 import { Query } from '../../query';
 import { keyParser } from './key-parser';
 import { ConditionCheck } from '@aws-sdk/client-dynamodb';
+import { QueryCommandInput } from '@aws-sdk/lib-dynamodb';
 
 /**
  * Generate a transaction `ConditionCheck` based on a `Query`.
@@ -9,7 +9,7 @@ import { ConditionCheck } from '@aws-sdk/client-dynamodb';
  * @param	query			Query to generate the check.
  */
 export const generateConditionCheck = (query: Query): ConditionCheck => {
-	const build: QueryInput = query.buildRawQuery();
+	const build: QueryCommandInput = query.buildRawQuery();
 
 	if (!build.FilterExpression) {
 		// A `ConditionCheck` requires a `FilterExpression`

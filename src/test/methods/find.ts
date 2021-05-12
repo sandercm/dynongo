@@ -7,6 +7,7 @@ import {
 	throttlingException
 } from '../fixtures/aws-error';
 import stubPromise from '../fixtures/stub-promise';
+import { QueryCommandOutput } from '@aws-sdk/lib-dynamodb';
 
 db.connect();
 
@@ -63,9 +64,31 @@ let scanStub: sinon.SinonStub;
 test.before(() => {
 	queryStub = sandbox.stub(db.dynamodb !, 'query');
 	queryStub.withArgs(fixture1).returns(stubPromise({}));
-	queryStub.withArgs(fixtureWithRetry).onFirstCall().returns(stubPromise(serviceUnavailableException));
-	queryStub.withArgs(fixtureWithRetry).onSecondCall().returns(stubPromise(throttlingException));
-	queryStub.withArgs(fixtureWithRetry).onThirdCall().returns(stubPromise({Count: 2, Items: ['foo', 'bar']}));
+	queryStub.withArgs(fixtureWithRetry).onFirstCall().returns(
+		new Promise<QueryCommandOutput>(((_resolve, reject) => {
+				reject(serviceUnavailableException);
+			})
+		)
+	);
+	queryStub.withArgs(fixtureWithRetry).onSecondCall().returns(
+		new Promise<QueryCommandOutput>(((_resolve, reject) => {
+				reject(throttlingException);
+			})
+		)
+	);
+	queryStub.withArgs(fixtureWithRetry).onThirdCall().returns(
+		new Promise<QueryCommandOutput>(((resolve, _reject) => {
+				resolve({
+					$metadata: {},
+					Count: 2,
+					Items: [
+						{'first': 'foo'},
+						{'second': 'bar'}
+					]
+				});
+			})
+		)
+	);
 	queryStub.withArgs(fixtureWithRetryAbort).returns(stubPromise(conditionalCheckFailedException));
 	queryStub.returns(stubPromise({Count: 2, Items: ['foo', 'bar']}));
 
@@ -97,7 +120,6 @@ test.serial('find', async t => {
 
 test.serial('should retry on error', async t => {
 	queryStub.resetHistory();
-
 	await t.notThrowsAsync(Table.find({id: '200'}).retry(3).exec());
 
 	t.is(queryStub.callCount, 3);
