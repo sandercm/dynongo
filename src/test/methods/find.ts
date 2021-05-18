@@ -89,8 +89,23 @@ test.before(() => {
 			})
 		)
 	);
-	queryStub.withArgs(fixtureWithRetryAbort).returns(stubPromise(conditionalCheckFailedException));
-	queryStub.returns(stubPromise({Count: 2, Items: ['foo', 'bar']}));
+	queryStub.withArgs(fixtureWithRetryAbort).returns(
+		new Promise<QueryCommandOutput>(((_resolve, reject) => {
+			reject(conditionalCheckFailedException);
+		})
+	));
+	queryStub.returns(
+		new Promise<QueryCommandOutput>(((resolve, _reject) => {
+			resolve({
+				$metadata: {},
+				Count: 2,
+				Items: [
+					{'first': 'foo'},
+					{'second': 'bar'}
+				]
+			});
+		})
+	));
 
 	scanStub = sandbox.stub(db.dynamodb !, 'scan');
 	scanStub.withArgs(fixture2).returns(stubPromise({}));
@@ -301,11 +316,21 @@ test.serial('select multiple (space separated)', async t => {
 });
 
 test.serial('result', async t => {
-	t.deepEqual(await Table.find({id: '5'}).exec(), ['foo', 'bar']);
+	t.deepEqual(await Table.find({id: '5'}).exec(),
+		[
+			{'first': 'foo'},
+			{'second': 'bar'}
+		]);
 });
 
 test.serial('raw result', async t => {
-	t.deepEqual(await Table.find({id: '5'}).raw().exec(), {Count: 2, Items: ['foo', 'bar']});
+	t.deepEqual(await Table.find({id: '5'}).raw().exec(), {
+		$metadata: {},
+		Count: 2,
+		Items: [
+			{'first': 'foo'},
+			{'second': 'bar'}
+		]});
 });
 
 test.serial('raw result limit', async t => {
